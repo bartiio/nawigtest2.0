@@ -1,0 +1,176 @@
+{
+  "version": "2.0",
+  "current_floor": 1,
+  "floors": {
+    "0": {
+      "graph": {
+        "name": "Parter",
+        "nodes": [
+          {
+            "x": 150,
+            "y": 200,
+            "id": 1,
+            "label": "P0"
+          },
+          {
+            "x": 150,
+            "y": 500,
+            "id": 8,
+            "label": "X2"
+          },
+          {
+            "x": 800,
+            "y": 500,
+            "id": 25,
+            "label": "X9"
+          },
+          {
+            "x": 800,
+            "y": 250,
+            "id": 32,
+            "label": "X11"
+          }
+        ],
+        "edges": [
+          {
+            "node1_id": 8,
+            "node2_id": 1,
+            "weight": 300.0
+          },
+          {
+            "node1_id": 25,
+            "node2_id": 8,
+            "weight": 650.0
+          },
+          {
+            "node1_id": 32,
+            "node2_id": 25,
+            "weight": 250.0
+          }
+        ],
+        "next_node_id": 34
+      },
+      "rooms": [
+        {
+          "id": "room_0_1",
+          "floor": 0,
+          "name": "Sala 1",
+          "x": 770.0,
+          "y": 330.0,
+          "connection_x": 800.0,
+          "connection_y": 330.0,
+          "edge": {
+            "node1_id": 32,
+            "node2_id": 25,
+            "weight": 250.0
+          }
+        }
+      ],
+      "elevators": [
+        {
+          "id": "elevator_0_1",
+          "floor": 0,
+          "group_id": "cec77937-6cb8-421a-a8bc-b9f84fb1d84b",
+          "name": "W1",
+          "type": "elevator",
+          "x": 180.0,
+          "y": 269.0,
+          "connection_x": 150.0,
+          "connection_y": 269.0,
+          "edge": {
+            "node1_id": 8,
+            "node2_id": 1,
+            "weight": 300.0
+          }
+        }
+      ],
+      "room_counter": 2,
+      "elevator_counter": 2
+    },
+    "1": {
+      "graph": {
+        "name": "Piętro 1",
+        "nodes": [
+          {
+            "x": 150,
+            "y": 200,
+            "id": 1,
+            "label": "X0"
+          },
+          {
+            "x": 150,
+            "y": 500,
+            "id": 9,
+            "label": "X4"
+          },
+          {
+            "x": 800,
+            "y": 500,
+            "id": 28,
+            "label": "X11"
+          },
+          {
+            "x": 800,
+            "y": 300,
+            "id": 35,
+            "label": "X14"
+          }
+        ],
+        "edges": [
+          {
+            "node1_id": 9,
+            "node2_id": 1,
+            "weight": 300.0
+          },
+          {
+            "node1_id": 28,
+            "node2_id": 9,
+            "weight": 650.0
+          },
+          {
+            "node1_id": 35,
+            "node2_id": 28,
+            "weight": 200.0
+          }
+        ],
+        "next_node_id": 37
+      },
+      "rooms": [
+        {
+          "id": "room_1_1",
+          "floor": 1,
+          "name": "Sala 1",
+          "x": 770.0,
+          "y": 373.0,
+          "connection_x": 800.0,
+          "connection_y": 373.0,
+          "edge": {
+            "node1_id": 35,
+            "node2_id": 28,
+            "weight": 200.0
+          }
+        }
+      ],
+      "elevators": [
+        {
+          "id": "elevator_1_1",
+          "floor": 1,
+          "group_id": "cec77937-6cb8-421a-a8bc-b9f84fb1d84b",
+          "name": "W1",
+          "type": "elevator",
+          "x": 180.0,
+          "y": 270.0,
+          "connection_x": 150.0,
+          "connection_y": 270.0,
+          "edge": {
+            "node1_id": 9,
+            "node2_id": 1,
+            "weight": 300.0
+          }
+        }
+      ],
+      "room_counter": 2,
+      "elevator_counter": 2
+    }
+  }
+}
