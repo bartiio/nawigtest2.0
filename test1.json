@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "current_floor": 1,
+  "current_floor": 0,
   "floors": {
     "0": {
       "graph": {
@@ -8,60 +8,251 @@
         "nodes": [
           {
             "x": 150,
-            "y": 200,
+            "y": 100,
             "id": 1,
             "label": "P0"
           },
           {
             "x": 150,
-            "y": 500,
-            "id": 8,
-            "label": "X2"
+            "y": 400,
+            "id": 10,
+            "label": "P9"
+          },
+          {
+            "x": 450,
+            "y": 400,
+            "id": 19,
+            "label": "X1"
           },
           {
             "x": 800,
-            "y": 500,
-            "id": 25,
-            "label": "X9"
+            "y": 150,
+            "id": 36,
+            "label": "P35"
+          },
+          {
+            "x": 450,
+            "y": 150,
+            "id": 37,
+            "label": "P36"
+          },
+          {
+            "x": 450,
+            "y": 650,
+            "id": 52,
+            "label": "P51"
           },
           {
             "x": 800,
-            "y": 250,
-            "id": 32,
-            "label": "X11"
+            "y": 650,
+            "id": 62,
+            "label": "P61"
+          },
+          {
+            "x": 797.0,
+            "y": 400.0,
+            "id": 63,
+            "label": "N63"
+          },
+          {
+            "x": 150.0,
+            "y": 209.0,
+            "id": 64,
+            "label": "R1"
+          },
+          {
+            "x": 798.5551680558,
+            "y": 270.40266201666964,
+            "id": 65,
+            "label": "R2"
+          },
+          {
+            "x": 731.0,
+            "y": 650.0,
+            "id": 66,
+            "label": "R3"
+          },
+          {
+            "x": 310.0,
+            "y": 400.0,
+            "id": 67,
+            "label": "R4"
+          },
+          {
+            "x": 645.0,
+            "y": 400.0,
+            "id": 68,
+            "label": "R5"
+          },
+          {
+            "x": 450.0,
+            "y": 546.0,
+            "id": 69,
+            "label": "R6"
+          },
+          {
+            "x": 450.0,
+            "y": 285.0,
+            "id": 70,
+            "label": "E1"
           }
         ],
         "edges": [
           {
-            "node1_id": 8,
+            "node1_id": 10,
+            "node2_id": 64,
+            "weight": 191.0
+          },
+          {
+            "node1_id": 64,
             "node2_id": 1,
-            "weight": 300.0
+            "weight": 109.0
           },
           {
-            "node1_id": 25,
-            "node2_id": 8,
-            "weight": 650.0
+            "node1_id": 36,
+            "node2_id": 65,
+            "weight": 120.41133069627361
           },
           {
-            "node1_id": 32,
-            "node2_id": 25,
-            "weight": 250.0
+            "node1_id": 65,
+            "node2_id": 63,
+            "weight": 129.60666865577303
+          },
+          {
+            "node1_id": 62,
+            "node2_id": 66,
+            "weight": 69.0
+          },
+          {
+            "node1_id": 66,
+            "node2_id": 52,
+            "weight": 281.0
+          },
+          {
+            "node1_id": 19,
+            "node2_id": 67,
+            "weight": 140.0
+          },
+          {
+            "node1_id": 67,
+            "node2_id": 10,
+            "weight": 160.0
+          },
+          {
+            "node1_id": 19,
+            "node2_id": 68,
+            "weight": 195.0
+          },
+          {
+            "node1_id": 68,
+            "node2_id": 63,
+            "weight": 152.0
+          },
+          {
+            "node1_id": 52,
+            "node2_id": 69,
+            "weight": 104.0
+          },
+          {
+            "node1_id": 69,
+            "node2_id": 19,
+            "weight": 146.0
+          },
+          {
+            "node1_id": 19,
+            "node2_id": 70,
+            "weight": 115.0
+          },
+          {
+            "node1_id": 70,
+            "node2_id": 37,
+            "weight": 135.0
           }
         ],
-        "next_node_id": 34
+        "next_node_id": 71
       },
       "rooms": [
         {
           "id": "room_0_1",
           "floor": 0,
           "name": "Sala 1",
-          "x": 770.0,
-          "y": 330.0,
-          "connection_x": 800.0,
-          "connection_y": 330.0,
+          "x": 120.0,
+          "y": 209.0,
+          "connection_x": 150.0,
+          "connection_y": 209.0,
           "edge": {
-            "node1_id": 32,
-            "node2_id": 25,
+            "node1_id": 10,
+            "node2_id": 1,
+            "weight": 300.0
+          }
+        },
+        {
+          "id": "room_0_2",
+          "floor": 0,
+          "name": "Sala 2",
+          "x": 768.557327822548,
+          "y": 270.04268793387064,
+          "connection_x": 798.5551680558,
+          "connection_y": 270.40266201666964,
+          "edge": {
+            "node1_id": 36,
+            "node2_id": 63,
+            "weight": 250.01799935204664
+          }
+        },
+        {
+          "id": "room_0_3",
+          "floor": 0,
+          "name": "Sala 3",
+          "x": 731.0,
+          "y": 620.0,
+          "connection_x": 731.0,
+          "connection_y": 650.0,
+          "edge": {
+            "node1_id": 62,
+            "node2_id": 52,
+            "weight": 350.0
+          }
+        },
+        {
+          "id": "room_0_4",
+          "floor": 0,
+          "name": "Sala 4",
+          "x": 310.0,
+          "y": 370.0,
+          "connection_x": 310.0,
+          "connection_y": 400.0,
+          "edge": {
+            "node1_id": 19,
+            "node2_id": 10,
+            "weight": 300.0
+          }
+        },
+        {
+          "id": "room_0_5",
+          "floor": 0,
+          "name": "Sala 5",
+          "x": 645.0,
+          "y": 370.0,
+          "connection_x": 645.0,
+          "connection_y": 400.0,
+          "edge": {
+            "node1_id": 19,
+            "node2_id": 63,
+            "weight": 347.0
+          }
+        },
+        {
+          "id": "room_0_6",
+          "floor": 0,
+          "name": "Sala 6",
+          "x": 480.0,
+          "y": 546.0,
+          "connection_x": 450.0,
+          "connection_y": 546.0,
+          "edge": {
+            "node1_id": 52,
+            "node2_id": 19,
             "weight": 250.0
           }
         }
@@ -70,21 +261,21 @@
         {
           "id": "elevator_0_1",
           "floor": 0,
-          "group_id": "cec77937-6cb8-421a-a8bc-b9f84fb1d84b",
+          "group_id": "89bcd08f-7233-4dce-b6bd-b30fae4fad62",
           "name": "W1",
           "type": "elevator",
-          "x": 180.0,
-          "y": 269.0,
-          "connection_x": 150.0,
-          "connection_y": 269.0,
+          "x": 420.0,
+          "y": 285.0,
+          "connection_x": 450.0,
+          "connection_y": 285.0,
           "edge": {
-            "node1_id": 8,
-            "node2_id": 1,
-            "weight": 300.0
+            "node1_id": 19,
+            "node2_id": 37,
+            "weight": 250.0
           }
         }
       ],
-      "room_counter": 2,
+      "room_counter": 7,
       "elevator_counter": 2
     },
     "1": {
@@ -93,61 +284,288 @@
         "nodes": [
           {
             "x": 150,
-            "y": 200,
+            "y": 100,
             "id": 1,
-            "label": "X0"
+            "label": "P0"
           },
           {
             "x": 150,
-            "y": 500,
-            "id": 9,
-            "label": "X4"
+            "y": 400,
+            "id": 10,
+            "label": "P9"
+          },
+          {
+            "x": 450,
+            "y": 400,
+            "id": 19,
+            "label": "X1"
+          },
+          {
+            "x": 450,
+            "y": 650,
+            "id": 27,
+            "label": "P26"
+          },
+          {
+            "x": 850,
+            "y": 650,
+            "id": 36,
+            "label": "P35"
           },
           {
             "x": 800,
-            "y": 500,
-            "id": 28,
-            "label": "X11"
+            "y": 400,
+            "id": 47,
+            "label": "P46"
           },
           {
             "x": 800,
-            "y": 300,
-            "id": 35,
-            "label": "X14"
+            "y": 200,
+            "id": 54,
+            "label": "P53"
+          },
+          {
+            "x": 450,
+            "y": 150,
+            "id": 62,
+            "label": "P60"
+          },
+          {
+            "x": 450.0,
+            "y": 282.0,
+            "id": 63,
+            "label": "E1"
+          },
+          {
+            "x": 263.0,
+            "y": 400.0,
+            "id": 64,
+            "label": "R1"
+          },
+          {
+            "x": 387.0,
+            "y": 400.0,
+            "id": 65,
+            "label": "R2"
+          },
+          {
+            "x": 640.0,
+            "y": 400.0,
+            "id": 66,
+            "label": "R3"
+          },
+          {
+            "x": 800.0,
+            "y": 272.0,
+            "id": 67,
+            "label": "R4"
+          },
+          {
+            "x": 450.0,
+            "y": 209.0,
+            "id": 68,
+            "label": "R5"
+          },
+          {
+            "x": 450.0,
+            "y": 493.0,
+            "id": 69,
+            "label": "R6"
+          },
+          {
+            "x": 561.0,
+            "y": 650.0,
+            "id": 70,
+            "label": "R7"
+          },
+          {
+            "x": 730.0,
+            "y": 650.0,
+            "id": 71,
+            "label": "E2"
           }
         ],
         "edges": [
           {
-            "node1_id": 9,
+            "node1_id": 10,
             "node2_id": 1,
             "weight": 300.0
           },
           {
-            "node1_id": 28,
-            "node2_id": 9,
-            "weight": 650.0
+            "node1_id": 63,
+            "node2_id": 19,
+            "weight": 118.0
           },
           {
-            "node1_id": 35,
-            "node2_id": 28,
-            "weight": 200.0
+            "node1_id": 64,
+            "node2_id": 10,
+            "weight": 113.0
+          },
+          {
+            "node1_id": 19,
+            "node2_id": 65,
+            "weight": 63.0
+          },
+          {
+            "node1_id": 65,
+            "node2_id": 64,
+            "weight": 124.0
+          },
+          {
+            "node1_id": 47,
+            "node2_id": 66,
+            "weight": 160.0
+          },
+          {
+            "node1_id": 66,
+            "node2_id": 19,
+            "weight": 190.0
+          },
+          {
+            "node1_id": 54,
+            "node2_id": 67,
+            "weight": 72.0
+          },
+          {
+            "node1_id": 67,
+            "node2_id": 47,
+            "weight": 128.0
+          },
+          {
+            "node1_id": 62,
+            "node2_id": 68,
+            "weight": 59.0
+          },
+          {
+            "node1_id": 68,
+            "node2_id": 63,
+            "weight": 73.0
+          },
+          {
+            "node1_id": 27,
+            "node2_id": 69,
+            "weight": 157.0
+          },
+          {
+            "node1_id": 69,
+            "node2_id": 19,
+            "weight": 93.0
+          },
+          {
+            "node1_id": 70,
+            "node2_id": 27,
+            "weight": 111.0
+          },
+          {
+            "node1_id": 36,
+            "node2_id": 71,
+            "weight": 120.0
+          },
+          {
+            "node1_id": 71,
+            "node2_id": 70,
+            "weight": 169.0
           }
         ],
-        "next_node_id": 37
+        "next_node_id": 72
       },
       "rooms": [
         {
           "id": "room_1_1",
           "floor": 1,
           "name": "Sala 1",
-          "x": 770.0,
-          "y": 373.0,
-          "connection_x": 800.0,
-          "connection_y": 373.0,
+          "x": 263.0,
+          "y": 370.0,
+          "connection_x": 263.0,
+          "connection_y": 400.0,
           "edge": {
-            "node1_id": 35,
-            "node2_id": 28,
+            "node1_id": 19,
+            "node2_id": 10,
+            "weight": 300.0
+          }
+        },
+        {
+          "id": "room_1_2",
+          "floor": 1,
+          "name": "Sala 2",
+          "x": 387.0,
+          "y": 370.0,
+          "connection_x": 387.0,
+          "connection_y": 400.0,
+          "edge": {
+            "node1_id": 19,
+            "node2_id": 64,
+            "weight": 187.0
+          }
+        },
+        {
+          "id": "room_1_3",
+          "floor": 1,
+          "name": "Sala 3",
+          "x": 640.0,
+          "y": 370.0,
+          "connection_x": 640.0,
+          "connection_y": 400.0,
+          "edge": {
+            "node1_id": 47,
+            "node2_id": 19,
+            "weight": 350.0
+          }
+        },
+        {
+          "id": "room_1_4",
+          "floor": 1,
+          "name": "Sala 4",
+          "x": 770.0,
+          "y": 272.0,
+          "connection_x": 800.0,
+          "connection_y": 272.0,
+          "edge": {
+            "node1_id": 54,
+            "node2_id": 47,
             "weight": 200.0
+          }
+        },
+        {
+          "id": "room_1_5",
+          "floor": 1,
+          "name": "Sala 5",
+          "x": 480.0,
+          "y": 209.0,
+          "connection_x": 450.0,
+          "connection_y": 209.0,
+          "edge": {
+            "node1_id": 62,
+            "node2_id": 63,
+            "weight": 132.0
+          }
+        },
+        {
+          "id": "room_1_6",
+          "floor": 1,
+          "name": "Sala 6",
+          "x": 480.0,
+          "y": 493.0,
+          "connection_x": 450.0,
+          "connection_y": 493.0,
+          "edge": {
+            "node1_id": 27,
+            "node2_id": 19,
+            "weight": 250.0
+          }
+        },
+        {
+          "id": "room_1_7",
+          "floor": 1,
+          "name": "Sala 7",
+          "x": 561.0,
+          "y": 620.0,
+          "connection_x": 561.0,
+          "connection_y": 650.0,
+          "edge": {
+            "node1_id": 36,
+            "node2_id": 27,
+            "weight": 400.0
           }
         }
       ],
@@ -155,21 +573,388 @@
         {
           "id": "elevator_1_1",
           "floor": 1,
-          "group_id": "cec77937-6cb8-421a-a8bc-b9f84fb1d84b",
+          "group_id": "89bcd08f-7233-4dce-b6bd-b30fae4fad62",
           "name": "W1",
           "type": "elevator",
-          "x": 180.0,
-          "y": 270.0,
-          "connection_x": 150.0,
-          "connection_y": 270.0,
+          "x": 420.0,
+          "y": 282.0,
+          "connection_x": 450.0,
+          "connection_y": 282.0,
           "edge": {
-            "node1_id": 9,
-            "node2_id": 1,
-            "weight": 300.0
+            "node1_id": 62,
+            "node2_id": 19,
+            "weight": 250.0
+          }
+        },
+        {
+          "id": "elevator_1_2",
+          "floor": 1,
+          "group_id": "fd3c642e-4ce0-49cf-867e-fb9c3b80c0b4",
+          "name": "W2",
+          "type": "elevator",
+          "x": 730.0,
+          "y": 620.0,
+          "connection_x": 730.0,
+          "connection_y": 650.0,
+          "edge": {
+            "node1_id": 36,
+            "node2_id": 70,
+            "weight": 289.0
           }
         }
       ],
-      "room_counter": 2,
+      "room_counter": 8,
+      "elevator_counter": 3
+    },
+    "2": {
+      "graph": {
+        "name": "Piętro 2",
+        "nodes": [
+          {
+            "x": 850,
+            "y": 650,
+            "id": 1,
+            "label": "P0"
+          },
+          {
+            "x": 450,
+            "y": 650,
+            "id": 13,
+            "label": "P12"
+          },
+          {
+            "x": 450.0,
+            "y": 400.0,
+            "id": 20,
+            "label": "X1"
+          },
+          {
+            "x": 800,
+            "y": 400,
+            "id": 30,
+            "label": "P29"
+          },
+          {
+            "x": 800,
+            "y": 150,
+            "id": 37,
+            "label": "P36"
+          },
+          {
+            "x": 150,
+            "y": 400,
+            "id": 46,
+            "label": "P45"
+          },
+          {
+            "x": 150.0,
+            "y": 100.0,
+            "id": 55,
+            "label": "P54"
+          },
+          {
+            "x": 450,
+            "y": 150,
+            "id": 57,
+            "label": "P56"
+          },
+          {
+            "x": 729.0,
+            "y": 650.0,
+            "id": 65,
+            "label": "E1"
+          },
+          {
+            "x": 150.0,
+            "y": 208.0,
+            "id": 66,
+            "label": "R1"
+          },
+          {
+            "x": 342.0,
+            "y": 400.0,
+            "id": 67,
+            "label": "R2"
+          },
+          {
+            "x": 450.0,
+            "y": 517.0,
+            "id": 68,
+            "label": "R3"
+          },
+          {
+            "x": 602.0,
+            "y": 650.0,
+            "id": 69,
+            "label": "R4"
+          },
+          {
+            "x": 637.0,
+            "y": 400.0,
+            "id": 70,
+            "label": "R5"
+          },
+          {
+            "x": 574.0,
+            "y": 400.0,
+            "id": 71,
+            "label": "R6"
+          },
+          {
+            "x": 800.0,
+            "y": 238.0,
+            "id": 72,
+            "label": "R7"
+          },
+          {
+            "x": 450.0,
+            "y": 280.0,
+            "id": 73,
+            "label": "R8"
+          },
+          {
+            "x": 450.0,
+            "y": 209.0,
+            "id": 74,
+            "label": "R9"
+          }
+        ],
+        "edges": [
+          {
+            "node1_id": 65,
+            "node2_id": 1,
+            "weight": 121.0
+          },
+          {
+            "node1_id": 55,
+            "node2_id": 66,
+            "weight": 108.0
+          },
+          {
+            "node1_id": 66,
+            "node2_id": 46,
+            "weight": 192.0
+          },
+          {
+            "node1_id": 46,
+            "node2_id": 67,
+            "weight": 192.0
+          },
+          {
+            "node1_id": 67,
+            "node2_id": 20,
+            "weight": 108.0
+          },
+          {
+            "node1_id": 20,
+            "node2_id": 68,
+            "weight": 117.0
+          },
+          {
+            "node1_id": 68,
+            "node2_id": 13,
+            "weight": 133.0
+          },
+          {
+            "node1_id": 13,
+            "node2_id": 69,
+            "weight": 152.0
+          },
+          {
+            "node1_id": 69,
+            "node2_id": 65,
+            "weight": 127.0
+          },
+          {
+            "node1_id": 30,
+            "node2_id": 70,
+            "weight": 163.0
+          },
+          {
+            "node1_id": 70,
+            "node2_id": 71,
+            "weight": 63.0
+          },
+          {
+            "node1_id": 71,
+            "node2_id": 20,
+            "weight": 124.0
+          },
+          {
+            "node1_id": 37,
+            "node2_id": 72,
+            "weight": 88.0
+          },
+          {
+            "node1_id": 72,
+            "node2_id": 30,
+            "weight": 162.0
+          },
+          {
+            "node1_id": 20,
+            "node2_id": 73,
+            "weight": 120.0
+          },
+          {
+            "node1_id": 73,
+            "node2_id": 74,
+            "weight": 71.0
+          },
+          {
+            "node1_id": 74,
+            "node2_id": 57,
+            "weight": 59.0
+          }
+        ],
+        "next_node_id": 75
+      },
+      "rooms": [
+        {
+          "id": "room_2_1",
+          "floor": 2,
+          "name": "Sala 1",
+          "x": 180.0,
+          "y": 208.0,
+          "connection_x": 150.0,
+          "connection_y": 208.0,
+          "edge": {
+            "node1_id": 55,
+            "node2_id": 46,
+            "weight": 300.0
+          }
+        },
+        {
+          "id": "room_2_2",
+          "floor": 2,
+          "name": "Sala 2",
+          "x": 342.0,
+          "y": 370.0,
+          "connection_x": 342.0,
+          "connection_y": 400.0,
+          "edge": {
+            "node1_id": 46,
+            "node2_id": 20,
+            "weight": 300.0
+          }
+        },
+        {
+          "id": "room_2_3",
+          "floor": 2,
+          "name": "Sala 3",
+          "x": 480.0,
+          "y": 517.0,
+          "connection_x": 450.0,
+          "connection_y": 517.0,
+          "edge": {
+            "node1_id": 20,
+            "node2_id": 13,
+            "weight": 250.0
+          }
+        },
+        {
+          "id": "room_2_4",
+          "floor": 2,
+          "name": "Sala 4",
+          "x": 602.0,
+          "y": 620.0,
+          "connection_x": 602.0,
+          "connection_y": 650.0,
+          "edge": {
+            "node1_id": 13,
+            "node2_id": 65,
+            "weight": 279.0
+          }
+        },
+        {
+          "id": "room_2_5",
+          "floor": 2,
+          "name": "Sala 5",
+          "x": 637.0,
+          "y": 370.0,
+          "connection_x": 637.0,
+          "connection_y": 400.0,
+          "edge": {
+            "node1_id": 30,
+            "node2_id": 20,
+            "weight": 350.0
+          }
+        },
+        {
+          "id": "room_2_6",
+          "floor": 2,
+          "name": "Sala 6",
+          "x": 574.0,
+          "y": 370.0,
+          "connection_x": 574.0,
+          "connection_y": 400.0,
+          "edge": {
+            "node1_id": 70,
+            "node2_id": 20,
+            "weight": 187.0
+          }
+        },
+        {
+          "id": "room_2_7",
+          "floor": 2,
+          "name": "Sala 7",
+          "x": 770.0,
+          "y": 238.0,
+          "connection_x": 800.0,
+          "connection_y": 238.0,
+          "edge": {
+            "node1_id": 37,
+            "node2_id": 30,
+            "weight": 250.0
+          }
+        },
+        {
+          "id": "room_2_8",
+          "floor": 2,
+          "name": "Sala 8",
+          "x": 420.0,
+          "y": 280.0,
+          "connection_x": 450.0,
+          "connection_y": 280.0,
+          "edge": {
+            "node1_id": 20,
+            "node2_id": 57,
+            "weight": 250.0
+          }
+        },
+        {
+          "id": "room_2_9",
+          "floor": 2,
+          "name": "Sala 9",
+          "x": 480.0,
+          "y": 209.0,
+          "connection_x": 450.0,
+          "connection_y": 209.0,
+          "edge": {
+            "node1_id": 73,
+            "node2_id": 57,
+            "weight": 130.0
+          }
+        }
+      ],
+      "elevators": [
+        {
+          "id": "elevator_2_1",
+          "floor": 2,
+          "group_id": "fd3c642e-4ce0-49cf-867e-fb9c3b80c0b4",
+          "name": "W1",
+          "type": "elevator",
+          "x": 729.0,
+          "y": 620.0,
+          "connection_x": 729.0,
+          "connection_y": 650.0,
+          "edge": {
+            "node1_id": 13,
+            "node2_id": 1,
+            "weight": 400.0
+          }
+        }
+      ],
+      "room_counter": 10,
       "elevator_counter": 2
     }
   }

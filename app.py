@@ -983,8 +983,12 @@ class GraphEditorApp:
         #     print(f"Zaktualizowano {updated_count} wag krawędzi")
     
     def find_shortest_path_multi_floor(self, start_point, end_point):
-        """Znajduje najkrótszą trasę między dwoma punktami przez graf"""
-        import heapq
+        """Znajduje najkrótszą trasę między dwoma punktami przez graf - algorytm BFS"""
+        from collections import deque
+        
+        print(f"\n=== Wyszukiwanie trasy ===")
+        print(f"Start: {start_point['name']} (piętro {start_point['floor']})")
+        print(f"Cel: {end_point['name']} (piętro {end_point['floor']})")
         
         # Krok 1: Znajdź najbliższe węzły dla punktów start i end
         start_floor = start_point["floor"]
@@ -994,52 +998,50 @@ class GraphEditorApp:
         end_nodes = self.get_nodes_near_point(end_point)
         
         if not start_nodes:
-            messagebox.showerror("Błąd", f"Nie znaleziono węzłów grafu w pobliżu punktu startowego.\nUpewnij się że {start_point['name']} jest przy grafie.")
+            messagebox.showerror("Błąd", f"Nie znaleziono węzłów grafu w pobliżu punktu startowego.")
             return None
         
         if not end_nodes:
-            messagebox.showerror("Błąd", f"Nie znaleziono węzłów grafu w pobliżu punktu docelowego.\nUpewnij się że {end_point['name']} jest przy grafie.")
+            messagebox.showerror("Błąd", f"Nie znaleziono węzłów grafu w pobliżu punktu docelowego.")
             return None
+        
+        # Użyj najbliższych węzłów
+        start_node_id = start_nodes[0][0]
+        end_node_id = end_nodes[0][0]
+        
+        start_node = self.floors[start_floor]["graph"].nodes.get(start_node_id)
+        end_node = self.floors[end_floor]["graph"].nodes.get(end_node_id)
+        
+        print(f"Start: węzeł {start_node.label} (piętro {start_floor})")
+        print(f"Cel: węzeł {end_node.label} (piętro {end_floor})")
         
         # Krok 2: Zbuduj mapę połączeń wind
         elevator_connections = self.build_elevator_connections()
         
-        # Krok 3: Dijkstra - znajdź najkrótszą trasę
-        queue = []
+        # Krok 3: BFS - znajdź najkrótszą trasę
+        queue = deque()
         visited = set()
         came_from = {}
-        cost_so_far = {}
         
-        # Inicjalizuj kolejkę od węzłów startowych
-        for node_id, dist_from_start in start_nodes:
-            state = (start_floor, node_id)
-            heapq.heappush(queue, (dist_from_start, start_floor, node_id))
-            cost_so_far[state] = dist_from_start
-            came_from[state] = None
+        # Stan: (floor, node_id)
+        start_state = (start_floor, start_node_id)
+        end_state = (end_floor, end_node_id)
         
-        # Stwórz specjalny stan końcowy (poza grafem)
-        goal_state = ("END", -1)
-        found_goal = None
-        best_cost = float('inf')
-        best_end_node = None
+        queue.append(start_state)
+        visited.add(start_state)
+        came_from[start_state] = None
+        
+        found = False
         
         while queue:
-            current_cost, current_floor, current_node_id = heapq.heappop(queue)
+            current_floor, current_node_id = queue.popleft()
             
-            state = (current_floor, current_node_id)
+            # Czy dotarliśmy do celu?
+            if (current_floor, current_node_id) == end_state:
+                found = True
+                break
             
-            if state in visited:
-                continue
-            visited.add(state)
-            
-            # Sprawdź czy to jest stan końcowy
-            if state == goal_state:
-                if current_cost < best_cost:
-                    best_cost = current_cost
-                    found_goal = state
-                continue
-            
-            # Pobierz obecny węzeł
+            # Pobierz dane piętra i węzeł
             floor_data = self.floors[current_floor]
             graph = floor_data["graph"]
             current_node = graph.nodes.get(current_node_id)
@@ -1047,22 +1049,7 @@ class GraphEditorApp:
             if not current_node:
                 continue
             
-            # Jeśli jesteśmy na piętrze docelowym, sprawdź czy możemy dojść do celu
-            if current_floor == end_floor:
-                for end_node_id, dist_to_end in end_nodes:
-                    if current_node_id == end_node_id:
-                        # Możemy dojść do celu z tego węzła
-                        total_cost = current_cost + dist_to_end
-                        
-                        if goal_state not in visited and total_cost < cost_so_far.get(goal_state, float('inf')):
-                            cost_so_far[goal_state] = total_cost
-                            came_from[goal_state] = state
-                            heapq.heappush(queue, (total_cost, "END", -1))
-            
-            if not current_node:
-                continue
-            
-            # Eksploruj sąsiednie węzły
+            # 1. Eksploruj sąsiednie węzły NA TYM SAMYM PIĘTRZE (priorytet!)
             for edge in graph.edges:
                 next_node_id = None
                 if edge.node1_id == current_node_id:
@@ -1071,59 +1058,51 @@ class GraphEditorApp:
                     next_node_id = edge.node1_id
                 
                 if next_node_id:
-                    next_node = graph.nodes.get(next_node_id)
-                    if next_node:
-                        next_state = (current_floor, next_node_id)
-                        if next_state not in visited:
-                            edge_cost = edge.weight if edge.weight else current_node.distance_to(next_node)
-                            new_cost = current_cost + edge_cost
-                            
-                            if new_cost < cost_so_far.get(next_state, float('inf')):
-                                cost_so_far[next_state] = new_cost
-                                # Zapisz state + krawędź którą przeszliśmy
-                                came_from[next_state] = (state, edge)
-                                heapq.heappush(queue, (new_cost, current_floor, next_node_id))
+                    next_state = (current_floor, next_node_id)
+                    if next_state not in visited:
+                        visited.add(next_state)
+                        came_from[next_state] = (current_floor, current_node_id, "edge")
+                        queue.append(next_state)
             
-            # Sprawdź windy/schody (przejścia między piętrami)
-            for elevator in floor_data["elevators"]:
-                elev_dist = math.sqrt((current_node.x - elevator["connection_x"])**2 + 
-                                     (current_node.y - elevator["connection_y"])**2)
-                
-                if elev_dist < 500:  # Bardzo duży zasięg dla wind
-                    group_id = elevator.get("group_id")
-                    if not group_id:
-                        continue
+            # 2. Tylko jeśli NIE jesteśmy na piętrze docelowym, sprawdź windy
+            if current_floor != end_floor:
+                for elevator in floor_data["elevators"]:
+                    # Sprawdź czy węzeł jest blisko windy
+                    elev_dist = math.sqrt((current_node.x - elevator["connection_x"])**2 + 
+                                         (current_node.y - elevator["connection_y"])**2)
                     
-                    # Znajdź tę samą windę na innych piętrach
-                    for other_floor in elevator_connections.get(group_id, {}).keys():
-                        if other_floor == current_floor:
+                    if elev_dist < 50:  # Mniejszy zasięg - tylko bezpośrednio przy windzie
+                        group_id = elevator.get("group_id")
+                        if not group_id:
                             continue
                         
-                        other_elevators = elevator_connections[group_id][other_floor]
-                        for other_elev in other_elevators:
-                            # Znajdź węzły w pobliżu wyjścia z windy
-                            other_graph = self.floors[other_floor]["graph"]
+                        # Znajdź tę samą windę na innych piętrach
+                        for other_floor in elevator_connections.get(group_id, {}).keys():
+                            if other_floor == current_floor:
+                                continue  # Nie używaj windy na tym samym piętrze!
                             
-                            for other_node in other_graph.nodes.values():
-                                exit_dist = math.sqrt((other_node.x - other_elev["connection_x"])**2 + 
-                                                     (other_node.y - other_elev["connection_y"])**2)
+                            other_elevators = elevator_connections[group_id][other_floor]
+                            for other_elev in other_elevators:
+                                # Znajdź węzły w pobliżu wyjścia z windy
+                                other_graph = self.floors[other_floor]["graph"]
                                 
-                                if exit_dist < 500:  # Bardzo duży zasięg
-                                    next_state = (other_floor, other_node.id)
-                                    if next_state not in visited:
-                                        floor_cost = 50 if elevator["type"] == "elevator" else 80
-                                        new_cost = current_cost + elev_dist + floor_cost + exit_dist
-                                        
-                                        if new_cost < cost_so_far.get(next_state, float('inf')):
-                                            cost_so_far[next_state] = new_cost
-                                            came_from[next_state] = (state, elevator, other_elev)
-                                            heapq.heappush(queue, (new_cost, other_floor, other_node.id))
+                                for other_node in other_graph.nodes.values():
+                                    exit_dist = math.sqrt((other_node.x - other_elev["connection_x"])**2 + 
+                                                         (other_node.y - other_elev["connection_y"])**2)
+                                    
+                                    if exit_dist < 50:  # Mniejszy zasięg
+                                        next_state = (other_floor, other_node.id)
+                                        if next_state not in visited:
+                                            visited.add(next_state)
+                                            came_from[next_state] = (current_floor, current_node_id, "elevator", elevator, other_elev)
+                                            queue.append(next_state)
         
-        # Zrekonstruuj ścieżkę
-        if found_goal:
-            return self.reconstruct_path(came_from, found_goal, start_point, end_point)
+        if not found:
+            messagebox.showerror("Błąd", "Nie można znaleźć trasy!")
+            return None
         
-        return None
+        # Rekonstruuj ścieżkę
+        return self.reconstruct_path_simple(came_from, start_state, end_state, start_point, end_point)
     
     def get_nodes_near_point(self, point):
         """Zwraca listę węzłów w pobliżu punktu (jako [(node_id, distance), ...])"""
@@ -1163,10 +1142,117 @@ class GraphEditorApp:
         
         return nearby_nodes
     
+    def reconstruct_path_simple(self, came_from, start_state, end_state, start_point, end_point):
+        """Prosta rekonstrukcja ścieżki z BFS"""
+        # Idź wstecz od celu do startu
+        path_states = []
+        elevator_transitions = []
+        
+        current = end_state
+        
+        while current is not None:
+            path_states.append(current)
+            
+            if current == start_state:
+                break
+            
+            prev_info = came_from.get(current)
+            if prev_info is None:
+                break
+            
+            if len(prev_info) == 3:
+                # Zwykła krawędź: (prev_floor, prev_node_id, "edge")
+                prev_floor, prev_node_id, edge_type = prev_info
+                current = (prev_floor, prev_node_id)
+            elif len(prev_info) == 5:
+                # Przejście przez windę: (prev_floor, prev_node_id, "elevator", enter_elev, exit_elev)
+                prev_floor, prev_node_id, edge_type, enter_elev, exit_elev = prev_info
+                elevator_transitions.append({
+                    "from": (prev_floor, prev_node_id),
+                    "to": path_states[-1],
+                    "enter": enter_elev,
+                    "exit": exit_elev
+                })
+                current = (prev_floor, prev_node_id)
+            else:
+                break
+        
+        # Odwróć (teraz od startu do celu)
+        path_states.reverse()
+        
+        # Buduj finalną ścieżkę
+        path = []
+        
+        # Punkt startowy
+        path.append({
+            "floor": start_point["floor"],
+            "type": "start",
+            "point": start_point
+        })
+        
+        # Węzły i windy
+        for i, state in enumerate(path_states):
+            floor_num, node_id = state
+            node = self.floors[floor_num]["graph"].nodes.get(node_id)
+            
+            if not node:
+                continue
+            
+            # Sprawdź czy PRZED tym węzłem jest wyjście z windy
+            for trans in elevator_transitions:
+                if trans["to"] == state:
+                    path.append({
+                        "floor": floor_num,
+                        "type": "elevator_exit",
+                        "elevator": trans["exit"]
+                    })
+                    break
+            
+            # Dodaj węzeł
+            path.append({
+                "floor": floor_num,
+                "type": "node",
+                "node": node
+            })
+            
+            # Sprawdź czy PO tym węźle jest wejście do windy
+            if i + 1 < len(path_states):
+                next_state = path_states[i + 1]
+                for trans in elevator_transitions:
+                    if trans["from"] == state and trans["to"] == next_state:
+                        path.append({
+                            "floor": floor_num,
+                            "type": "elevator_enter",
+                            "elevator": trans["enter"]
+                        })
+                        break
+        
+        # Punkt końcowy
+        path.append({
+            "floor": end_point["floor"],
+            "type": "end",
+            "point": end_point
+        })
+        
+        # Wyświetl trasę
+        print(f"\n=== Znaleziona trasa ===")
+        print(f"Liczba węzłów: {len(path_states)}")
+        print(f"Trasa:")
+        for step in path:
+            if step["type"] == "node":
+                print(f"  → {step['node'].label} (piętro {step['floor']})")
+            elif step["type"] == "elevator_enter":
+                print(f"  → Wejście do: {step['elevator']['name']}")
+            elif step["type"] == "elevator_exit":
+                print(f"  → Wyjście z: {step['elevator']['name']}")
+        print("=" * 40 + "\n")
+        
+        return path
+    
     def reconstruct_path(self, came_from, goal_state, start_point, end_point):
-        """Rekonstruuje ścieżkę z mapy came_from"""
-        # Idź wstecz od celu do startu, budując listę kroków
-        path_items = []
+        """Rekonstruuje ścieżkę z mapy came_from - WSZYSTKIE węzły pośrednie"""
+        # Idź wstecz od celu do startu, budując listę stanów (floor, node_id)
+        states_path = []
         
         # Jeśli goal_state to ("END", -1), zacznij od came_from[goal_state]
         if goal_state == ("END", -1):
@@ -1174,50 +1260,76 @@ class GraphEditorApp:
         else:
             current = goal_state
         
-        # Zbierz wszystkie kroki od celu do startu
+        # Zbierz wszystkie stany od celu do startu
         iteration = 0
-        while current is not None and iteration < 100:
+        elevator_transitions = []  # Lista przejść przez windy: (prev_state, enter_elev, exit_elev, next_state)
+        
+        print(f"\n=== DEBUG: Rekonstrukcja wstecz ===")
+        
+        while current is not None and iteration < 1000:
             iteration += 1
             
-            # Dodaj obecny stan do ścieżki
-            if current != ("END", -1):
-                path_items.append(("node", current, None))
+            if current == ("END", -1):
+                value = came_from.get(current)
+                if value:
+                    current = value
+                else:
+                    break
+                continue
+            
+            # Jeśli to wirtualny węzeł startowy, kończymy
+            if current == ("START", -1):
+                break
+            
+            # Dodaj obecny stan
+            states_path.append(current)
             
             # Pobierz poprzedni stan
             value = came_from.get(current)
             
             if value is None:
-                # Dotarliśmy do startu
+                # Dotarliśmy do startu (nie powinno się zdarzyć przy wirtualnym węźle)
+                print(f"  WARNING: came_from[{current}] is None - unexpected!")
+                break
+            if value is None:
+                # Dotarliśmy do startu (nie powinno się zdarzyć przy wirtualnym węźle)
+                print(f"  WARNING: came_from[{current}] is None - unexpected!")
                 break
             elif isinstance(value, tuple):
-                if len(value) == 4:
-                    # Przejście przez windę: (prev_state, "elevator", enter_elev, exit_elev)
-                    prev_state, marker, enter_elev, exit_elev = value
-                    # Wstaw informację o windzie PRZED obecnym statem
-                    path_items[-1] = ("elevator", current, enter_elev, exit_elev)
-                    current = prev_state
-                elif len(value) == 3:
-                    # Może to stary format windy: (prev_state, enter_elev, exit_elev)
-                    prev_state, enter_elev, exit_elev = value
-                    path_items[-1] = ("elevator", current, enter_elev, exit_elev)
-                    current = prev_state
+                # Sprawdź czy to wirtualny węzeł startowy
+                if value == ("START", -1):
+                    print(f"  Koniec: dotarliśmy do START")
+                    break
                 elif len(value) == 2:
-                    # Zwykła krawędź: (prev_state, edge)
-                    prev_state, edge = value
-                    # Zaktualizuj ostatni item o edge
-                    if path_items:
-                        path_items[-1] = ("node", current, edge)
+                    # Może być (prev_state, edge) lub (wirtualny_start, None)
+                    prev_state, edge_or_none = value
+                    if prev_state == ("START", -1):
+                        # To było połączenie z wirtualnego startu
+                        print(f"  Koniec: {current} pochodzi od START")
+                        break
+                    else:
+                        # Zwykła krawędź: (prev_state, edge)
+                        print(f"  {current} ← {prev_state} (via edge)")
+                        current = prev_state
+                elif len(value) == 3:
+                    # Przejście przez windę: (prev_state, enter_elev, exit_elev)
+                    prev_state, enter_elev, exit_elev = value
+                    print(f"  {current} ← {prev_state} (via elevator {enter_elev['name']} → {exit_elev['name']})")
+                    elevator_transitions.append((prev_state, enter_elev, exit_elev, current))
                     current = prev_state
                 else:
                     current = value[0] if value else None
             else:
                 # Pojedyncza wartość - poprzedni stan
+                if value == ("START", -1):
+                    print(f"  Koniec: {current} pochodzi od START")
+                    break
                 current = value
         
         # Odwróć kolejność (od startu do celu)
-        path_items.reverse()
+        states_path.reverse()
         
-        # Buduj finalną ścieżkę
+        # Buduj finalną ścieżkę ze WSZYSTKIMI węzłami
         path = []
         
         # Dodaj punkt startowy
@@ -1227,51 +1339,51 @@ class GraphEditorApp:
             "point": start_point
         })
         
-        # Przetwórz wszystkie kroki
-        for i, item in enumerate(path_items):
-            if item[0] == "node":
-                # Węzeł grafu
-                state = item[1]
-                edge = item[2] if len(item) > 2 else None
-                
-                if state == ("END", -1):
-                    continue
-                
-                floor_num, node_id = state
-                node = self.floors[floor_num]["graph"].nodes.get(node_id)
-                
-                if node:
+        # Przetwórz wszystkie stany - NAJPIERW dodaj wszystkie węzły, POTEM windy
+        i = 0
+        while i < len(states_path):
+            current_state = states_path[i]
+            floor_num, node_id = current_state
+            node = self.floors[floor_num]["graph"].nodes.get(node_id)
+            
+            if not node:
+                i += 1
+                continue
+            
+            # Sprawdź czy ten węzeł jest punktem wyjścia Z windy (na nowym piętrze)
+            is_after_elevator = False
+            for prev_state, enter_elev, exit_elev, next_state in elevator_transitions:
+                if current_state == next_state:
+                    # To jest pierwszy węzeł po wyjściu z windy
                     path.append({
                         "floor": floor_num,
-                        "type": "node",
-                        "node": node,
-                        "edge": edge
+                        "type": "elevator_exit",
+                        "elevator": exit_elev
                     })
+                    is_after_elevator = True
+                    break
             
-            elif item[0] == "elevator":
-                # Przejście przez windę
-                current_state, enter_elev, exit_elev = item[1], item[2], item[3]
-                
-                if current_state == ("END", -1):
-                    continue
-                
-                floor_num, node_id = current_state
-                
-                # Dodaj wejście do windy na poprzednim piętrze
-                if len(path) > 0:
-                    prev_floor = path[-1]["floor"]
+            # Dodaj węzeł do ścieżki (zawsze)
+            path.append({
+                "floor": floor_num,
+                "type": "node",
+                "node": node
+            })
+            
+            # Sprawdź czy NASTĘPNY krok to przejście przez windę
+            is_before_elevator = False
+            for prev_state, enter_elev, exit_elev, next_state in elevator_transitions:
+                if current_state == prev_state:
+                    # Ten węzeł jest przed wejściem do windy
                     path.append({
-                        "floor": prev_floor,
+                        "floor": floor_num,
                         "type": "elevator_enter",
                         "elevator": enter_elev
                     })
-                
-                # Dodaj wyjście z windy na nowym piętrze
-                path.append({
-                    "floor": floor_num,
-                    "type": "elevator_exit",
-                    "elevator": exit_elev
-                })
+                    is_before_elevator = True
+                    break
+            
+            i += 1
         
         # Dodaj punkt końcowy
         path.append({
@@ -1279,6 +1391,19 @@ class GraphEditorApp:
             "type": "end",
             "point": end_point
         })
+        
+        # DEBUG: Wyświetl szczegóły ścieżki
+        print(f"\n=== Znaleziona trasa ===")
+        print(f"Liczba węzłów: {len(states_path)}")
+        print(f"Trasa:")
+        for i, step in enumerate(path):
+            if step["type"] == "node":
+                print(f"  → {step['node'].label}")
+            elif step["type"] == "elevator_enter":
+                print(f"  → Wejście: {step['elevator']['name']}")
+            elif step["type"] == "elevator_exit":
+                print(f"  → Wyjście: {step['elevator']['name']}")
+        print("=" * 40 + "\n")
         
         return path
     
@@ -2210,6 +2335,35 @@ class GraphEditorApp:
             self.rooms.append(room)
             self.room_counter += 1
             
+            # AUTOMATYCZNE TWORZENIE WĘZŁA przy punkcie połączenia
+            # Sprawdź czy nie ma już węzła w tym miejscu (w promieniu 10px)
+            existing_node = None
+            for node in self.graph.nodes.values():
+                dist = math.sqrt((node.x - closest_point[0])**2 + (node.y - closest_point[1])**2)
+                if dist < 10:
+                    existing_node = node
+                    break
+            
+            if not existing_node:
+                # Utwórz nowy węzeł w punkcie połączenia
+                new_node = self.graph.add_node(closest_point[0], closest_point[1], 
+                                               f"R{self.room_counter - 1}")
+                
+                # Podziel krawędź: usuń starą, dodaj dwie nowe przez nowy węzeł
+                node1_id = closest_edge.node1_id
+                node2_id = closest_edge.node2_id
+                
+                # Usuń starą krawędź
+                self.graph.remove_edge(node1_id, node2_id)
+                
+                # Dodaj dwie nowe krawędzie
+                self.graph.add_edge(node1_id, new_node.id)
+                self.graph.add_edge(new_node.id, node2_id)
+                
+                print(f"✓ Utworzono węzeł {new_node.label} dla sali {room['name']}")
+            else:
+                print(f"✓ Użyto istniejącego węzła {existing_node.label} dla sali {room['name']}")
+            
             self.redraw()
             self.update_status()
     
@@ -2335,6 +2489,37 @@ class GraphEditorApp:
                 
                 self.elevators.append(elevator)
                 self.elevator_counter += 1
+                
+                # AUTOMATYCZNE TWORZENIE WĘZŁA przy punkcie połączenia
+                # Sprawdź czy nie ma już węzła w tym miejscu (w promieniu 10px)
+                existing_node = None
+                for node in self.graph.nodes.values():
+                    dist = math.sqrt((node.x - closest_point[0])**2 + (node.y - closest_point[1])**2)
+                    if dist < 10:
+                        existing_node = node
+                        break
+                
+                if not existing_node:
+                    # Utwórz nowy węzeł w punkcie połączenia
+                    elev_prefix = "E" if elevator_type == "elevator" else "S"
+                    new_node = self.graph.add_node(closest_point[0], closest_point[1], 
+                                                   f"{elev_prefix}{self.elevator_counter - 1}")
+                    
+                    # Podziel krawędź: usuń starą, dodaj dwie nowe przez nowy węzeł
+                    node1_id = closest_edge.node1_id
+                    node2_id = closest_edge.node2_id
+                    
+                    # Usuń starą krawędź
+                    self.graph.remove_edge(node1_id, node2_id)
+                    
+                    # Dodaj dwie nowe krawędzie
+                    self.graph.add_edge(node1_id, new_node.id)
+                    self.graph.add_edge(new_node.id, node2_id)
+                    
+                    print(f"✓ Utworzono węzeł {new_node.label} dla {elevator['name']}")
+                else:
+                    print(f"✓ Użyto istniejącego węzła {existing_node.label} dla {elevator['name']}")
+                
                 self.redraw()
                 self.update_status()
     
@@ -2601,73 +2786,36 @@ class GraphEditorApp:
             step_type = step.get("type", "")
             
             if step_type == "start":
-                # Punkt startowy
+                # Punkt startowy - środek sali
                 point = step["point"]
                 data = point["data"]
-                edge = step.get("edge")  # Krawędź do której podłączony jest punkt startowy
                 
                 if "connection_x" in data and "connection_y" in data:
                     start_pos = (data["connection_x"], data["connection_y"])
                 else:
                     start_pos = (data["x"], data["y"])
                 
-                # Jeśli mamy krawędź, narysuj linię od punktu startowego do najbliższego węzła tej krawędzi
-                if edge and i + 1 < len(path):
-                    floor_data = self.floors[step["floor"]]
-                    graph = floor_data["graph"]
-                    
-                    # Znajdź węzły krawędzi
-                    node1 = graph.nodes.get(edge.node1_id)
-                    node2 = graph.nodes.get(edge.node2_id)
-                    
-                    if node1 and node2:
-                        # Znajdź który węzeł jest bliżej punktu startowego
-                        dist1 = math.sqrt((node1.x - start_pos[0])**2 + (node1.y - start_pos[1])**2)
-                        dist2 = math.sqrt((node2.x - start_pos[0])**2 + (node2.y - start_pos[1])**2)
-                        
-                        if dist1 < dist2:
-                            closest_node_pos = (node1.x, node1.y)
-                        else:
-                            closest_node_pos = (node2.x, node2.y)
-                        
-                        # Linia od startu do najbliższego węzła krawędzi (kreskowana)
-                        self.canvas.create_line(start_pos[0], start_pos[1],
-                                              closest_node_pos[0], closest_node_pos[1],
-                                              fill="#00DD00", width=4, 
-                                              dash=(8, 4), tags="navigation")
-                
-                # Mały punkt startowy
-                r = 6
+                # Duży wyraźny punkt startowy (środek sali)
+                r = 10
                 self.canvas.create_oval(start_pos[0] - r, start_pos[1] - r,
                                       start_pos[0] + r, start_pos[1] + r,
                                       fill="#00FF00", outline="#008800",
-                                      width=2, tags="navigation")
+                                      width=3, tags="navigation")
+                
+                # Litera "A" w środku
+                self.canvas.create_text(start_pos[0], start_pos[1],
+                                      text="A", font=("Arial", 12, "bold"),
+                                      fill="white", tags="navigation")
                 
                 prev_pos = start_pos
                     
             elif step_type == "node":
                 # Węzeł grafu
                 node = step["node"]
-                edge = step.get("edge")  # Krawędź którą doszliśmy do tego węzła
                 current_pos = (node.x, node.y)
                 
-                # Rysuj linię od poprzedniego punktu wzdłuż krawędzi
-                if prev_pos and edge:
-                    # Mamy krawędź - rysuj wzdłuż niej
-                    floor_data = self.floors[step["floor"]]
-                    graph = floor_data["graph"]
-                    
-                    # Znajdź węzły krawędzi
-                    node1 = graph.nodes.get(edge.node1_id)
-                    node2 = graph.nodes.get(edge.node2_id)
-                    
-                    if node1 and node2:
-                        # Rysuj linię wzdłuż krawędzi
-                        self.canvas.create_line(node1.x, node1.y, node2.x, node2.y,
-                                              fill="#00DD00", width=6, tags="navigation",
-                                              capstyle=tk.ROUND, smooth=True)
-                elif prev_pos:
-                    # Brak krawędzi - rysuj prostą linię (fallback)
+                # Rysuj linię od poprzedniego punktu DO TEGO węzła
+                if prev_pos:
                     self.canvas.create_line(prev_pos[0], prev_pos[1],
                                           current_pos[0], current_pos[1],
                                           fill="#00DD00", width=6, tags="navigation",
@@ -2731,62 +2879,34 @@ class GraphEditorApp:
                     prev_pos = (elevator["x"], elevator["y"])
                 
             elif step_type == "end":
-                # Punkt końcowy
+                # Punkt końcowy - środek sali docelowej
                 point = step["point"]
                 data = point["data"]
-                edge = step.get("edge")  # Krawędź do której podłączony jest punkt końcowy
                 
                 if "connection_x" in data and "connection_y" in data:
                     end_pos = (data["connection_x"], data["connection_y"])
                 else:
                     end_pos = (data["x"], data["y"])
                 
-                # Linia do punktu końcowego - wzdłuż krawędzi jeśli dostępna
-                if prev_pos and edge:
-                    # Mamy krawędź - rysuj wzdłuż niej
-                    floor_data = self.floors[step["floor"]]
-                    graph = floor_data["graph"]
-                    
-                    # Znajdź węzły krawędzi
-                    node1 = graph.nodes.get(edge.node1_id)
-                    node2 = graph.nodes.get(edge.node2_id)
-                    
-                    if node1 and node2:
-                        # Rysuj linię wzdłuż krawędzi ze strzałką
-                        self.canvas.create_line(node1.x, node1.y, node2.x, node2.y,
-                                              fill="#00DD00", width=6, 
-                                              tags="navigation", capstyle=tk.ROUND, smooth=True)
-                        
-                        # Dodaj strzałkę od ostatniego węzła do punktu końcowego
-                        # Znajdź który węzeł jest bliżej punktu końcowego
-                        dist1 = math.sqrt((node1.x - end_pos[0])**2 + (node1.y - end_pos[1])**2)
-                        dist2 = math.sqrt((node2.x - end_pos[0])**2 + (node2.y - end_pos[1])**2)
-                        
-                        if dist1 < dist2:
-                            closest_node_pos = (node1.x, node1.y)
-                        else:
-                            closest_node_pos = (node2.x, node2.y)
-                        
-                        # Linia ze strzałką od węzła do punktu końcowego
-                        self.canvas.create_line(closest_node_pos[0], closest_node_pos[1],
-                                              end_pos[0], end_pos[1],
-                                              fill="#00DD00", width=4, 
-                                              arrow=tk.LAST, arrowshape=(16, 20, 6),
-                                              dash=(8, 4), tags="navigation")
-                elif prev_pos:
-                    # Brak krawędzi - rysuj prostą linię (fallback)
+                # Linia do punktu końcowego ze strzałką (z ostatniego węzła do środka sali)
+                if prev_pos:
                     self.canvas.create_line(prev_pos[0], prev_pos[1],
                                           end_pos[0], end_pos[1],
                                           fill="#00DD00", width=6, 
                                           arrow=tk.LAST, arrowshape=(16, 20, 6),
-                                          tags="navigation", capstyle=tk.ROUND)
+                                          tags="navigation", capstyle=tk.ROUND, smooth=True)
                 
-                # Punkt końcowy
-                r = 6
+                # Duży punkt końcowy (środek sali docelowej)
+                r = 10
                 self.canvas.create_oval(end_pos[0] - r, end_pos[1] - r,
                                       end_pos[0] + r, end_pos[1] + r,
                                       fill="#FF0000", outline="#880000",
-                                      width=2, tags="navigation")
+                                      width=3, tags="navigation")
+                
+                # Litera "B" w środku
+                self.canvas.create_text(end_pos[0], end_pos[1],
+                                      text="B", font=("Arial", 12, "bold"),
+                                      fill="white", tags="navigation")
     
     def get_point_coordinates(self, point):
         """Pobiera współrzędne punktu (tylko sale i windy)"""
@@ -2939,6 +3059,73 @@ class GraphEditorApp:
             except Exception as e:
                 messagebox.showerror("Błąd", f"Nie udało się zapisać mapy: {e}")
     
+    def auto_create_connection_nodes(self):
+        """Automatycznie tworzy węzły przy punktach połączenia sal/wind, które ich nie mają"""
+        nodes_created = 0
+        
+        for floor_num, floor_data in self.floors.items():
+            graph = floor_data["graph"]
+            
+            # Sprawdź sale
+            for room in floor_data["rooms"]:
+                if "connection_x" not in room or "connection_y" not in room:
+                    continue
+                
+                conn_x, conn_y = room["connection_x"], room["connection_y"]
+                
+                # Sprawdź czy istnieje węzeł w odległości < 10px
+                existing_node = None
+                for node in graph.nodes.values():
+                    dist = math.sqrt((node.x - conn_x)**2 + (node.y - conn_y)**2)
+                    if dist < 10:
+                        existing_node = node
+                        break
+                
+                if not existing_node and "edge" in room and room["edge"]:
+                    # Utwórz węzeł i podziel krawędź
+                    edge = room["edge"]
+                    new_node = graph.add_node(conn_x, conn_y, f"R{room['name'].replace('Sala ', '')}")
+                    
+                    # Podziel krawędź
+                    if edge.node1_id in graph.nodes and edge.node2_id in graph.nodes:
+                        graph.remove_edge(edge.node1_id, edge.node2_id)
+                        graph.add_edge(edge.node1_id, new_node.id)
+                        graph.add_edge(new_node.id, edge.node2_id)
+                        nodes_created += 1
+                        print(f"✓ Auto-utworzono węzeł {new_node.label} dla {room['name']} (piętro {floor_num})")
+            
+            # Sprawdź windy/schody
+            for elevator in floor_data["elevators"]:
+                if "connection_x" not in elevator or "connection_y" not in elevator:
+                    continue
+                
+                conn_x, conn_y = elevator["connection_x"], elevator["connection_y"]
+                
+                # Sprawdź czy istnieje węzeł w odległości < 10px
+                existing_node = None
+                for node in graph.nodes.values():
+                    dist = math.sqrt((node.x - conn_x)**2 + (node.y - conn_y)**2)
+                    if dist < 10:
+                        existing_node = node
+                        break
+                
+                if not existing_node and "edge" in elevator and elevator["edge"]:
+                    # Utwórz węzeł i podziel krawędź
+                    edge = elevator["edge"]
+                    elev_prefix = "E" if elevator["type"] == "elevator" else "S"
+                    new_node = graph.add_node(conn_x, conn_y, f"{elev_prefix}{elevator['name']}")
+                    
+                    # Podziel krawędź
+                    if edge.node1_id in graph.nodes and edge.node2_id in graph.nodes:
+                        graph.remove_edge(edge.node1_id, edge.node2_id)
+                        graph.add_edge(edge.node1_id, new_node.id)
+                        graph.add_edge(new_node.id, edge.node2_id)
+                        nodes_created += 1
+                        print(f"✓ Auto-utworzono węzeł {new_node.label} dla {elevator['name']} (piętro {floor_num})")
+        
+        if nodes_created > 0:
+            print(f"\n✅ Utworzono {nodes_created} węzłów połączeniowych dla sal/wind\n")
+    
     def load_graph(self):
         """Wczytuje mapę budynku z pliku JSON"""
         filename = filedialog.askopenfilename(
@@ -3073,6 +3260,9 @@ class GraphEditorApp:
                     }
                     
                     messagebox.showinfo("Wczytano", f"Wczytano starszy format grafu")
+                
+                # AUTOMATYCZNE DODAWANIE WĘZŁÓW dla sal/wind bez węzłów
+                self.auto_create_connection_nodes()
                 
                 self.redraw()
                 self.update_status()
