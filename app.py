@@ -1455,8 +1455,123 @@ class GraphEditorApp:
         
         return closest_node
     
+    def calculate_angle(self, x1, y1, x2, y2):
+        """Oblicza kąt w stopniach (0° = wschód, 90° = północ, 180° = zachód, 270° = południe)"""
+        angle = math.degrees(math.atan2(-(y2 - y1), x2 - x1))  # Minus Y bo canvas ma Y w dół
+        # Normalizuj do 0-360
+        if angle < 0:
+            angle += 360
+        return angle
+    
+    def get_turn_direction(self, angle1, angle2):
+        """Określa kierunek skrętu na podstawie dwóch kolejnych kątów
+        Zwraca: (typ_skrętu, kąt_skrętu)
+        """
+        # Oblicz różnicę kątów
+        diff = angle2 - angle1
+        
+        # Normalizuj do -180 do 180
+        while diff > 180:
+            diff -= 360
+        while diff < -180:
+            diff += 360
+        
+        abs_diff = abs(diff)
+        
+        # Klasyfikuj skręt
+        if abs_diff < 15:
+            return ("prosto", diff)
+        elif abs_diff < 45:
+            if diff > 0:
+                return ("lekko w lewo", diff)
+            else:
+                return ("lekko w prawo", diff)
+        elif abs_diff < 135:
+            if diff > 0:
+                return ("w lewo", diff)
+            else:
+                return ("w prawo", diff)
+        elif abs_diff < 165:
+            if diff > 0:
+                return ("ostro w lewo", diff)
+            else:
+                return ("ostro w prawo", diff)
+        else:
+            return ("zawróć", diff)
+    
+    def get_compass_direction(self, angle):
+        """Zwraca kierunek na kompasie"""
+        # Normalizuj kąt
+        angle = angle % 360
+        
+        if angle < 22.5 or angle >= 337.5:
+            return "na wschód"
+        elif angle < 67.5:
+            return "na północny-wschód"
+        elif angle < 112.5:
+            return "na północ"
+        elif angle < 157.5:
+            return "na północny-zachód"
+        elif angle < 202.5:
+            return "na zachód"
+        elif angle < 247.5:
+            return "na południowy-zachód"
+        elif angle < 292.5:
+            return "na południe"
+        else:
+            return "na południowy-wschód"
+    
+    def find_rooms_along_segment(self, node1, node2, floor_num, max_distance=60):
+        """Znajduje sale wzdłuż odcinka między dwoma węzłami"""
+        floor_data = self.floors.get(floor_num)
+        if not floor_data:
+            return []
+        
+        rooms_info = []
+        
+        for room in floor_data["rooms"]:
+            # Sprawdź odległość sali od linii między węzłami
+            dist_from_line = self.point_to_line_distance(
+                room["x"], room["y"],
+                node1.x, node1.y,
+                node2.x, node2.y
+            )
+            
+            if dist_from_line < max_distance:
+                # Określ czy sala jest po lewej czy prawej
+                # Wektor kierunku ruchu
+                dir_x = node2.x - node1.x
+                dir_y = node2.y - node1.y
+                
+                # Wektor do sali
+                to_room_x = room["x"] - node1.x
+                to_room_y = room["y"] - node1.y
+                
+                # Iloczyn wektorowy (dodatni = sala po lewej, ujemny = po prawej)
+                cross = dir_x * to_room_y - dir_y * to_room_x
+                
+                side = "po lewej" if cross > 0 else "po prawej"
+                
+                # Oblicz jak daleko wzdłuż odcinka jest sala
+                segment_length = math.sqrt(dir_x**2 + dir_y**2)
+                if segment_length > 0:
+                    # Projekcja wektora do sali na kierunek ruchu
+                    projection = (to_room_x * dir_x + to_room_y * dir_y) / segment_length
+                    relative_pos = projection / segment_length  # 0 = początek, 1 = koniec
+                else:
+                    relative_pos = 0
+                
+                rooms_info.append({
+                    "name": room["name"],
+                    "side": side,
+                    "distance_from_line": dist_from_line,
+                    "relative_position": relative_pos
+                })
+        
+        return rooms_info
+    
     def show_path_details(self, path):
-        """Pokazuje szczegóły znalezionej trasy"""
+        """Pokazuje szczegóły znalezionej trasy z naturalnymi instrukcjami GPS"""
         details = ["╔═══ TRASA NAWIGACJI ═══╗\n"]
         start_name = self.nav_start_point['name']
         end_name = self.nav_end_point['name']
@@ -1474,62 +1589,224 @@ class GraphEditorApp:
         details.append("━━━━━━━━━━━━━━━━━━━━━━")
         details.append("INSTRUKCJE:\n")
         
-        step_num = 1
-        current_floor = self.nav_start_point['floor']
-        shown_nodes = set()
-        
+        # Zbierz kroki z path w kolejności
+        steps_with_index = []
         for i, step in enumerate(path):
-            step_type = step.get("type", "")
+            steps_with_index.append((i, step))
+        
+        # Filtruj tylko istotne elementy
+        nodes_in_path = [(i, s) for i, s in steps_with_index if s.get("type") == "node"]
+        
+        if len(nodes_in_path) < 2:
+            details.append("1️⃣  Wyjdź i dotrzesz na miejsce!")
+            details.append("\n✅ META OSIĄGNIĘTA!")
+            details.append("\n╚═══════════════════════╝")
+            messagebox.showinfo("🗺️ Znaleziona trasa", "\n".join(details))
+            return
+        
+        step_num = 1
+        
+        # Pierwsza instrukcja - określ kierunek wyjścia z sali
+        if len(nodes_in_path) >= 1:
+            first_node_idx, first_node_step = nodes_in_path[0]
+            first_node = first_node_step["node"]
             
-            if step_type == "start":
-                details.append(f"1️⃣  Wyjdź z: {start_name}")
-                step_num += 1
+            # Wektor od sali startowej do pierwszego węzła
+            start_x = self.nav_start_point["data"]["x"]
+            start_y = self.nav_start_point["data"]["y"]
+            
+            # Jeśli sala ma connection point, użyj go
+            if "connection_x" in self.nav_start_point["data"]:
+                conn_x = self.nav_start_point["data"]["connection_x"]
+                conn_y = self.nav_start_point["data"]["connection_y"]
                 
-            elif step_type == "node":
-                # Pokaż tylko ważne węzły (z etykietami lub przed windami)
-                node = step["node"]
+                # Wektor od centrum sali do connection point (kierunek "do przodu" z sali)
+                to_conn_x = conn_x - start_x
+                to_conn_y = conn_y - start_y
                 
-                # Sprawdź czy następny krok to winda
-                next_is_elevator = (i + 1 < len(path) and 
-                                  path[i + 1].get("type") == "elevator_enter")
+                # Wektor od connection point do pierwszego węzła
+                to_node_x = first_node.x - conn_x
+                to_node_y = first_node.y - conn_y
                 
-                # Pokaż węzeł jeśli ma etykietę lub jest przed windą
-                if node.label and node.label != f"N{node.id}":
-                    if node.id not in shown_nodes:
-                        details.append(f"   ↓ Idź przez: {node.label}")
-                        shown_nodes.add(node.id)
-                elif next_is_elevator and node.id not in shown_nodes:
-                    details.append(f"   ↓ Dojdź do punktu przejścia")
-                    shown_nodes.add(node.id)
+                # Oblicz kąt skrętu
+                angle_to_conn = math.degrees(math.atan2(-to_conn_y, to_conn_x))
+                angle_to_node = math.degrees(math.atan2(-to_node_y, to_node_x))
                 
-            elif step_type == "elevator_enter":
+                diff = angle_to_node - angle_to_conn
+                while diff > 180:
+                    diff -= 360
+                while diff < -180:
+                    diff += 360
+                
+                # Określ kierunek
+                if abs(diff) < 30:
+                    exit_direction = "prosto"
+                elif abs(diff) < 90:
+                    exit_direction = "lekko w lewo" if diff > 0 else "lekko w prawo"
+                elif abs(diff) < 135:
+                    exit_direction = "w lewo" if diff > 0 else "w prawo"
+                else:
+                    exit_direction = "w tył"
+                
+                details.append(f"{step_num}️⃣  Wyjdź z: {start_name} i skręć {exit_direction}\n")
+            else:
+                # Brak connection point - po prostu "wyjdź"
+                details.append(f"{step_num}️⃣  Wyjdź z: {start_name}\n")
+        else:
+            details.append(f"{step_num}️⃣  Wyjdź z: {start_name}\n")
+        
+        step_num += 1
+        
+        # Przetwarzaj trasę w kolejności
+        prev_angle = None
+        node_index = 0
+        
+        for path_idx, step in steps_with_index:
+            step_type = step.get("type")
+            
+            # Instrukcje dla wind
+            if step_type == "elevator_enter":
                 elevator = step["elevator"]
                 elev_type = "windą" if elevator["type"] == "elevator" else "schodami"
                 elev_icon = "🛗" if elevator["type"] == "elevator" else "🚶"
+                current_floor = step["floor"]
                 
                 # Znajdź docelowe piętro
                 target_floor = None
-                for j in range(i + 1, len(path)):
+                for j in range(path_idx + 1, len(path)):
                     if path[j].get("type") == "elevator_exit":
                         target_floor = path[j]["floor"]
                         break
                 
                 if target_floor is not None:
-                    direction = "w górę ⬆️" if target_floor > step["floor"] else "w dół ⬇️"
-                    floor_diff = abs(target_floor - step["floor"])
-                    details.append(f"\n{step_num}️⃣  {elev_icon} Użyj: {elevator['name']}")
-                    details.append(f"   Jedź {elev_type} {direction}")
-                    details.append(f"   Zmiana: {step['floor']} → {target_floor} ({floor_diff} piętro/a)")
-                    current_floor = target_floor
+                    direction = "w górę ⬆️" if target_floor > current_floor else "w dół ⬇️"
+                    floor_diff = abs(target_floor - current_floor)
+                    
+                    # Nazwa piętra docelowego
+                    target_floor_data = self.floors.get(target_floor)
+                    target_floor_name = target_floor_data["graph"].name if target_floor_data else f"Piętro {target_floor}"
+                    
+                    details.append(f"{step_num}️⃣  {elev_icon} Wejdź do {elevator['name']}")
+                    details.append(f"     Jedź {elev_type} {direction} na piętro {target_floor}")
+                    details.append(f"     → {target_floor_name}")
+                    
+                    if floor_diff > 1:
+                        details.append(f"     (przejazd przez {floor_diff} pięter)")
+                    
+                    details.append("")  # Pusta linia
+                    step_num += 1
+                    prev_angle = None  # Reset kąta po windzie
+            
+            # Instrukcje nawigacyjne między węzłami
+            elif step_type == "node" and node_index < len(nodes_in_path) - 1:
+                idx, current_step = nodes_in_path[node_index]
+                current_node = current_step["node"]
+                floor_num = current_step["floor"]
+                
+                # Następny węzeł
+                next_idx, next_step = nodes_in_path[node_index + 1]
+                next_node = next_step["node"]
+                
+                # Oblicz kąt obecnego odcinka
+                current_angle = self.calculate_angle(
+                    current_node.x, current_node.y,
+                    next_node.x, next_node.y
+                )
+                
+                # Oblicz długość odcinka
+                distance = math.sqrt(
+                    (next_node.x - current_node.x)**2 + 
+                    (next_node.y - current_node.y)**2
+                )
+                distance_meters = int(distance / 10)  # Zakładamy 10px = 1m
+                
+                # Znajdź sale wzdłuż tego odcinka
+                rooms_along = self.find_rooms_along_segment(current_node, next_node, floor_num)
+                
+                # Jeśli to pierwszy odcinek (lub po windzie)
+                if prev_angle is None:
+                    # Zamiast kierunku kompasu, użyj opisu względnego
+                    instruction = f"{step_num}️⃣  "
+                    
+                    # Jeśli są sale na trasie, użyj ich jako wskazówki
+                    if rooms_along:
+                        rooms_by_side = {"po lewej": [], "po prawej": []}
+                        for room in rooms_along:
+                            if 0.1 < room["relative_position"] < 0.9:
+                                rooms_by_side[room["side"]].append(room["name"])
+                        
+                        # Spróbuj opisać kierunek względem najbliższej sali
+                        if rooms_by_side["po lewej"] and not rooms_by_side["po prawej"]:
+                            instruction += f"Kieruj się w stronę {rooms_by_side['po lewej'][0]}"
+                        elif rooms_by_side["po prawej"] and not rooms_by_side["po lewej"]:
+                            instruction += f"Kieruj się w stronę {rooms_by_side['po prawej'][0]}"
+                        else:
+                            instruction += "Idź prosto"
+                            
+                        if distance_meters > 5:
+                            instruction += f" (ok. {distance_meters}m)"
+                        
+                        # Dodaj informacje o wszystkich salach
+                        if rooms_by_side["po lewej"]:
+                            instruction += f"\n     → mijasz {', '.join(rooms_by_side['po lewej'])} po lewej"
+                        if rooms_by_side["po prawej"]:
+                            instruction += f"\n     → mijasz {', '.join(rooms_by_side['po prawej'])} po prawej"
+                    else:
+                        # Jeśli nie ma sal, po prostu "idź prosto"
+                        instruction += "Idź prosto korytarzem"
+                        if distance_meters > 5:
+                            instruction += f" (ok. {distance_meters}m)"
+                    
+                    details.append(instruction + "\n")
+                    step_num += 1
                 else:
-                    details.append(f"\n{step_num}️⃣  {elev_icon} Użyj: {elevator['name']} ({elev_type})")
+                    # Sprawdź czy jest skręt
+                    turn_type, turn_angle = self.get_turn_direction(prev_angle, current_angle)
+                    
+                    if turn_type != "prosto":
+                        # Jest skręt - nowa instrukcja
+                        instruction = f"{step_num}️⃣  Skręć {turn_type}"
+                        
+                        # Dodaj informację o odległości następnego odcinka
+                        if distance_meters > 5:
+                            instruction += f" i idź {distance_meters}m"
+                        
+                        # Dodaj informacje o salach
+                        if rooms_along:
+                            rooms_by_side = {"po lewej": [], "po prawej": []}
+                            for room in rooms_along:
+                                if 0.1 < room["relative_position"] < 0.9:
+                                    rooms_by_side[room["side"]].append(room["name"])
+                            
+                            if rooms_by_side["po lewej"]:
+                                instruction += f"\n     → mijasz {', '.join(rooms_by_side['po lewej'])} po lewej"
+                            if rooms_by_side["po prawej"]:
+                                instruction += f"\n     → mijasz {', '.join(rooms_by_side['po prawej'])} po prawej"
+                        
+                        details.append(instruction + "\n")
+                        step_num += 1
+                    else:
+                        # Kontynuacja prosto - wspomnieć o salach jeśli są
+                        if rooms_along:
+                            rooms_by_side = {"po lewej": [], "po prawej": []}
+                            for room in rooms_along:
+                                if 0.1 < room["relative_position"] < 0.9:
+                                    rooms_by_side[room["side"]].append(room["name"])
+                            
+                            if rooms_by_side["po lewej"] or rooms_by_side["po prawej"]:
+                                instruction = "     → Kontynuuj prosto"
+                                if rooms_by_side["po lewej"]:
+                                    instruction += f", mijasz {', '.join(rooms_by_side['po lewej'])} po lewej"
+                                if rooms_by_side["po prawej"]:
+                                    instruction += f", mijasz {', '.join(rooms_by_side['po prawej'])} po prawej"
+                                details.append(instruction)
                 
-                step_num += 1
-                shown_nodes.clear()  # Reset dla nowego piętra
-                
-            elif step_type == "end":
-                details.append(f"\n{step_num}️⃣  Dotarłeś do celu: {end_name}")
-                details.append("\n✅ META OSIĄGNIĘTA!")
+                prev_angle = current_angle
+                node_index += 1
+        
+        # Końcowa instrukcja
+        details.append(f"{step_num}️⃣  🎯 Dotarłeś do celu: {end_name}")
+        details.append("\n✅ META OSIĄGNIĘTA!")
         
         details.append("\n╚═══════════════════════╝")
         
